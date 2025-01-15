@@ -1,0 +1,7 @@
+streamlit
+pandas
+transformers
+yfinance
+plotly
+tf-keras
+watchdog
