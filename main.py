@@ -24,7 +24,7 @@ t1.image("index_0.png", width=120)  # Replace with actual logo path or URL
 t2.title("Getting to Know Mutually Human")
 t2.markdown(
     """
-    This dashboard demonstrates Data Engineering, Visualization, and AI/ML components using 
+    This dashboard demonstrates my skill sets with Data Engineering, Visualization, and AI/ML components focusing on a case study regarding
     **Mutually Human**, a custom software consultancy headquartered in Grand Rapids, Michigan.
     """
 )
