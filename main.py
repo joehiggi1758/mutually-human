@@ -4,6 +4,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import os
 
 # For AI/ML (NLP Question-Answering)
@@ -14,9 +15,22 @@ from transformers import pipeline
 # -----------------------------
 st.set_page_config(
     page_title="Getting to Know Mutually Human",
-    layout="wide",
+    layout="wide",  # ensures wide layout
     page_icon="🤝"
 )
+
+# Retrieve Streamlit's theme settings to adapt plot backgrounds & fonts
+theme_mode = st.get_option("theme.base")
+if theme_mode == "dark":
+    bg_color = "#0E1117"  # or "rgba(0, 0, 0, 0)" for transparency
+    text_color = "white"
+else:
+    bg_color = "white"
+    text_color = "black"
+
+# Primary and secondary colors
+primary_color = "#4B0082"   # dark purple
+secondary_color = "#4B4B4B" # dark gray
 
 # Header with Mutually Human branding
 t1, t2 = st.columns((0.15, 0.85))
@@ -30,7 +44,7 @@ t2.markdown(
 )
 
 # -----------------------------
-# 2. OVERVIEW METRICS
+# 2. COMPANY OVERVIEW METRICS
 # -----------------------------
 m1, m2, m3, m4, _ = st.columns((1, 1, 1, 1, 1))
 m1.metric(label="Founded", value="2006")
@@ -39,34 +53,262 @@ m3.metric(label="Team Size (approx.)", value="50+")
 m4.metric(label="Key Expertise", value="Human-Centered Design")
 
 # -----------------------------
-# 3. PREPARE DEMO DATA
+# 3. PREPARE HYPOTHETICAL MANUFACTURING DATA
 # -----------------------------
-# In a real scenario, replace with actual data or connect to a DB
-demo_csv = "mutually_human_projects.csv"
-
-# Only create CSV if it doesn't exist yet
-if not os.path.exists(demo_csv):
-    # Example data representing completed projects over years (fictional)
-    data = {
-        "Year": [2017, 2018, 2019, 2020, 2021, 2022, 2023],
-        "Projects_Completed": [12, 15, 20, 22, 18, 25, 30]
+manufacturing_csv = "manufacturing_data.csv"
+if not os.path.exists(manufacturing_csv):
+    # Create a fictional manufacturing dataset for demonstration
+    data_mfg = {
+        "Month": [
+            "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+        ],
+        "ProductionVolume": [1200, 1350, 1100, 1450, 1500, 1600,
+                             1550, 1580, 1490, 1700, 1650, 1800],
+        "DefectRate": [0.02, 0.025, 0.03, 0.018, 0.025, 0.022,
+                       0.028, 0.021, 0.027, 0.019, 0.03, 0.024],
+        "DowntimeMinutes": [40, 50, 35, 60, 55, 45,
+                            70, 65, 40, 55, 60, 50],
+        "CostOfGoodsSold": [10000, 11000, 10500, 11500, 11800, 12000,
+                            11900, 12100, 11750, 12500, 12300, 12800]
     }
-    df_projects = pd.DataFrame(data)
-    df_projects.to_csv(demo_csv, index=False)
+    df_manufacturing = pd.DataFrame(data_mfg)
+    df_manufacturing.to_csv(manufacturing_csv, index=False)
 else:
-    df_projects = pd.read_csv(demo_csv)
+    df_manufacturing = pd.read_csv(manufacturing_csv)
 
 # -----------------------------
 # 4. TABS FOR NAVIGATION
 # -----------------------------
-tab_qa, tab_projects, tab_overview = st.tabs([
-    "QA AI/ML Application", 
-    "Project Statistics",
-    "Overview"
+tab_overview, tab_manufacturing, tab_qa = st.tabs([
+    "Overview",
+    "Manufacturing Insights",
+    "QA AI/ML Application"
 ])
 
 # -----------------------------
-# 4A. QA AI/ML APPLICATION
+# 4A. OVERVIEW TAB
+# -----------------------------
+with tab_overview:
+    st.header("Application Overview")
+    st.markdown(
+        """
+        **This Dashboard Demonstrates**:
+        - **Data Engineering**: Ingesting or generating CSV data, 
+          structuring and preparing it for visualization.
+        - **AI/ML**: Simple context-based Q&A using the Hugging Face Transformers pipeline.
+        - **Visualization**: Plotly and Streamlit integration for interactive charts.
+
+        **About Mutually Human**:
+        - Specializes in human-centered design and custom software development.
+        - Known for deep collaboration and empathy-driven processes.
+        - Helps organizations innovate with bespoke digital solutions.
+
+        You can adapt or expand these components to create more complex 
+        analytics dashboards, interactive ML applications, or advanced 
+        data pipelines as needed.
+        """
+    )
+
+# -----------------------------
+# 4B. MANUFACTURING INSIGHTS TAB
+# -----------------------------
+with tab_manufacturing:
+    st.header("Manufacturing Insights Dashboard")
+
+    st.write(
+        "A demonstration of medium-to-advanced BI & analytics capabilities for a "
+        "hypothetical manufacturing scenario."
+    )
+
+    # 4B-1. KPI METRICS
+    col1, col2, col3, col4 = st.columns(4)
+    total_production = df_manufacturing["ProductionVolume"].sum()
+    avg_defect = df_manufacturing["DefectRate"].mean() * 100
+    total_downtime = df_manufacturing["DowntimeMinutes"].sum()
+    total_cogs = df_manufacturing["CostOfGoodsSold"].sum()
+
+    col1.metric("Total Production", f"{total_production:,}")
+    col2.metric("Avg Defect Rate", f"{avg_defect:.2f}%")
+    col3.metric("Total Downtime (min)", f"{total_downtime:,}")
+    col4.metric("Total COGS", f"${total_cogs:,.2f}")
+
+    # -------------------------
+    # CHARTS LAYOUT (2 ROWS, 2 COLUMNS PER ROW)
+    # -------------------------
+    # ROW 1: Multi-axis line chart & Correlation heatmap
+    row1_col1, row1_col2 = st.columns(2)
+
+    with row1_col1:
+        st.subheader("Production Volume & Downtime Over Time")
+
+        fig_mfg = go.Figure()
+
+        # Production Volume trace (left axis)
+        fig_mfg.add_trace(
+            go.Scatter(
+                x=df_manufacturing["Month"],
+                y=df_manufacturing["ProductionVolume"],
+                name="Production Volume",
+                mode="lines+markers",
+                line=dict(color=primary_color, width=2),
+                marker=dict(size=6),
+            )
+        )
+
+        # Downtime trace (right axis)
+        fig_mfg.add_trace(
+            go.Scatter(
+                x=df_manufacturing["Month"],
+                y=df_manufacturing["DowntimeMinutes"],
+                name="Downtime (min)",
+                mode="lines+markers",
+                line=dict(color=primary_color, width=2, dash="dash"),
+                marker=dict(size=6),
+                yaxis="y2"
+            )
+        )
+
+        fig_mfg.update_layout(
+            title="Production vs. Downtime",
+            xaxis=dict(
+                title="Month",
+                linecolor="black",
+                linewidth=2,
+                mirror=True
+            ),
+            yaxis=dict(
+                title="Production Volume",
+                linecolor="black",
+                linewidth=2,
+                mirror=True
+            ),
+            yaxis2=dict(
+                title="Downtime Minutes",
+                overlaying="y",
+                side="right",
+                linecolor="black",
+                linewidth=2
+            ),
+            margin=dict(l=20, r=20, t=50, b=20),
+            paper_bgcolor=bg_color,
+            plot_bgcolor=bg_color,
+            font=dict(family="Helvetica-Oblique", size=14, color=text_color),
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="right",
+                x=1
+            )
+        )
+
+        st.plotly_chart(fig_mfg, use_container_width=True)
+
+    with row1_col2:
+        st.subheader("Correlation Heatmap")
+
+        # Calculate correlation
+        numeric_cols = ["ProductionVolume", "DefectRate", "DowntimeMinutes", "CostOfGoodsSold"]
+        corr_matrix = df_manufacturing[numeric_cols].corr()
+
+        fig_corr = px.imshow(
+            corr_matrix,
+            text_auto=True,
+            color_continuous_scale=[secondary_color, primary_color],
+            title="Correlation (Prod, Defects, Downtime, COGS)"
+        )
+        fig_corr.update_layout(
+            margin=dict(l=20, r=20, t=50, b=20),
+            paper_bgcolor=bg_color,
+            plot_bgcolor=bg_color,
+            font=dict(family="Helvetica-Oblique", size=14, color=text_color)
+        )
+        fig_corr.update_xaxes(linecolor="black", linewidth=2, mirror=True)
+        fig_corr.update_yaxes(linecolor="black", linewidth=2, mirror=True)
+
+        st.plotly_chart(fig_corr, use_container_width=True)
+
+    # ROW 2: Sankey & Bar Chart
+    row2_col1, row2_col2 = st.columns(2)
+
+    # -------------------------
+    # Visualization 3: Sankey Diagram
+    # -------------------------
+    with row2_col1:
+        st.subheader("Mock Sankey Flow")
+        # Define simple flow data (source -> target -> value)
+        sankey_labels = ["Raw Materials", "In Production", "Assembly", "Finished Goods", "Defects"]
+        sankey_source = [0, 1, 2, 2]  # indexes of sankey_labels
+        sankey_target = [1, 2, 3, 4]
+        sankey_values = [1000, 950, 900, 50]
+
+        fig_sankey = go.Figure(data=[go.Sankey(
+            node=dict(
+                pad=15,
+                thickness=20,
+                line=dict(color="black", width=2),
+                label=sankey_labels,
+                color=primary_color  # node color
+            ),
+            link=dict(
+                source=sankey_source,
+                target=sankey_target,
+                value=sankey_values,
+                color=secondary_color  # link color
+            )
+        )])
+
+        fig_sankey.update_layout(
+            title_text="Material Flow (Hypothetical)",
+            font=dict(family="Helvetica-Oblique", size=14, color=text_color),
+            paper_bgcolor=bg_color,
+            plot_bgcolor=bg_color,
+            margin=dict(l=20, r=20, t=50, b=20)
+        )
+
+        st.plotly_chart(fig_sankey, use_container_width=True)
+
+    # -------------------------
+    # Visualization 4: Bar Chart (Defect Rate by Month)
+    # -------------------------
+    with row2_col2:
+        st.subheader("Defect Rate by Month")
+        fig_bar = px.bar(
+            df_manufacturing,
+            x="Month",
+            y="DefectRate",
+            color_discrete_sequence=[primary_color],  # single color (dark purple)
+            title="Defect Rate per Month"
+        )
+        fig_bar.update_layout(
+            paper_bgcolor=bg_color,
+            plot_bgcolor=bg_color,
+            font=dict(family="Helvetica-Oblique", size=14, color=text_color),
+            margin=dict(l=20, r=20, t=50, b=20)
+        )
+        fig_bar.update_xaxes(
+            title="Month",
+            linecolor="black",
+            linewidth=2,
+            mirror=True
+        )
+        fig_bar.update_yaxes(
+            title="Defect Rate",
+            linecolor="black",
+            linewidth=2,
+            mirror=True,
+            tickformat=".2%"  # convert decimal to percentage
+        )
+
+        st.plotly_chart(fig_bar, use_container_width=True)
+
+    st.write("---")
+    with st.expander("View Raw Manufacturing Data", expanded=False):
+        st.dataframe(df_manufacturing)
+
+# -----------------------------
+# 4C. QA AI/ML APPLICATION TAB
 # -----------------------------
 with tab_qa:
     st.header("Mutually Human QA System")
@@ -113,72 +355,3 @@ with tab_qa:
     st.write("- What are Mutually Human's core values?")
     st.write("- Which industries does Mutually Human serve?")
     st.write("- What differentiates Mutually Human from other consultancies?")
-
-# -----------------------------
-# 4B. PROJECT STATISTICS TAB
-# -----------------------------
-with tab_projects:
-    st.header("Project Statistics (Demo)")
-    st.write(
-        "Below is a sample of how we can display data engineering and visualization skills "
-        "using fictional project data."
-    )
-
-    # Create a line chart to visualize projects completed over the years
-    fig = px.line(
-        df_projects,
-        x="Year",
-        y="Projects_Completed",
-        title="Mutually Human - Projects Completed by Year (Fictional Data)",
-        markers=True
-    )
-
-    fig.update_layout(
-        xaxis=dict(showgrid=False),
-        yaxis=dict(showgrid=False),
-        plot_bgcolor="white",
-        font=dict(family="Helvetica", size=14, color="Black")
-    )
-    fig.update_traces(line=dict(width=3, color="#FFA500"), marker=dict(size=8))
-    fig.update_yaxes(title="Projects Completed")
-    fig.update_xaxes(title="Year")
-
-    st.plotly_chart(fig, use_container_width=True)
-
-    st.markdown(
-        """
-        **Data Engineering** aspect: 
-        - Demonstrating how a CSV can be generated or loaded, 
-          then processed (e.g., merging, cleaning, or joining in real cases).
-
-        **Visualization** aspect:
-        - Using Plotly and Streamlit to present interactive charts.
-
-        This setup can be extended to include metrics such as project durations, 
-        budgets, or client satisfaction scores.
-        """
-    )
-
-# -----------------------------
-# 4C. OVERVIEW TAB
-# -----------------------------
-with tab_overview:
-    st.header("Application Overview")
-    st.markdown(
-        """
-        **This Dashboard Demonstrates**:
-        - **Data Engineering**: Ingesting or generating CSV data, 
-          structuring and preparing it for visualization.
-        - **AI/ML**: Simple context-based Q&A using the Hugging Face Transformers pipeline.
-        - **Visualization**: Plotly and Streamlit integration for interactive charts.
-
-        **About Mutually Human**:
-        - Specializes in human-centered design and custom software development.
-        - Known for deep collaboration and empathy-driven processes.
-        - Helps organizations innovate with bespoke digital solutions.
-
-        You can adapt or expand these components to create more complex 
-        analytics dashboards, interactive ML applications, or advanced 
-        data pipelines as needed.
-        """
-    )
